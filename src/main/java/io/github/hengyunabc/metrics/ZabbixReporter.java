@@ -5,12 +5,9 @@ import io.github.hengyunabc.zabbix.sender.SenderResult;
 import io.github.hengyunabc.zabbix.sender.ZabbixSender;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
@@ -34,9 +31,6 @@ public class ZabbixReporter extends ScheduledReporter {
 	private String hostName;
 	private String prefix;
 
-	private LLDDataGenerator lldDataGenerator;
-	private Set<String> oldKeys = Collections.emptySet();
-
 	public static Builder forRegistry(MetricRegistry registry) {
 		return new Builder(registry);
 	}
@@ -50,8 +44,6 @@ public class ZabbixReporter extends ScheduledReporter {
 
 		private String hostName;
 		private String prefix = "";
-
-		private LLDDataGenerator lldDataGenerator;
 
 		public Builder(MetricRegistry registry) {
 			this.registry = registry;
@@ -119,11 +111,6 @@ public class ZabbixReporter extends ScheduledReporter {
 			return this;
 		}
 
-		public Builder lldDataGenerator(LLDDataGenerator lldDataGenerator) {
-			this.lldDataGenerator = lldDataGenerator;
-			return this;
-		}
-
 		/**
 		 * Builds a {@link ZabbixReporter} with the given properties.
 		 *
@@ -131,26 +118,18 @@ public class ZabbixReporter extends ScheduledReporter {
 		 */
 		public ZabbixReporter build(ZabbixSender zabbixSender) {
 			return new ZabbixReporter(registry, name, rateUnit, durationUnit,
-					filter, zabbixSender, hostName, prefix, lldDataGenerator);
+					filter, zabbixSender, hostName, prefix);
 		}
 	}
 
 	private ZabbixReporter(MetricRegistry registry, String name,
 			TimeUnit rateUnit, TimeUnit durationUnit, MetricFilter filter,
-			ZabbixSender zabbixSender, String hostName, String prefix,
-			LLDDataGenerator lldDataGenerator) {
+			ZabbixSender zabbixSender, String hostName, String prefix) {
 		super(registry, name, filter, rateUnit, durationUnit);
 		this.zabbixSender = zabbixSender;
 		this.hostName = hostName;
 		this.prefix = prefix;
-		this.lldDataGenerator = lldDataGenerator;
 	}
-
-//	protected ZabbixReporter(MetricRegistry registry, String name,
-//			MetricFilter filter, TimeUnit rateUnit, TimeUnit durationUnit) {
-//		super(registry, name, filter, rateUnit, durationUnit);
-//		// TODO Auto-generated constructor stub
-//	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
@@ -194,43 +173,16 @@ public class ZabbixReporter extends ScheduledReporter {
 			dataObjectList.add(dataObject);
 		}
 
-		if (lldDataGenerator != null) {
-			// check if has new key
-			HashSet<String> newKeys = new HashSet<String>();
-			for (DataObject object : dataObjectList) {
-				newKeys.add(object.getKey());
-			}
-			if (!oldKeys.containsAll(newKeys)) {
-				String dataString = lldDataGenerator.generateLLDDataString(
-						hostName, newKeys);
-				try {
-					SenderResult senderResult = zabbixSender.send(DataObject
-							.builder().host(hostName)
-							.key(lldDataGenerator.getDiscoveryRuleKey())
-							.value(dataString).build());
-					if(!senderResult.success()){
-						logger.warn("send DDL info to zabbix server not success!" + senderResult);
-					}
-					oldKeys = newKeys;
-				} catch (IOException e) {
-					logger.error("send DDL info to zabbix server error!", e);
-				}
-			}
-		}
-
 		try {
 			SenderResult senderResult = zabbixSender.send(dataObjectList);
 			if (!senderResult.success()) {
-				logger.warn("report metrics to zabbix not success!" + senderResult);
+				logger.warn("report metrics to zabbix not success!"
+						+ senderResult);
 			} else if (logger.isDebugEnabled()) {
 				logger.info("report metrics to zabbix success. " + senderResult);
 			}
 		} catch (IOException e) {
 			logger.error("report metris to zabbix error!");
-		}
-
-		for (DataObject object : dataObjectList) {
-			System.out.println(object);
 		}
 	}
 

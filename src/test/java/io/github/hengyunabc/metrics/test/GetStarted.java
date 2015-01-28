@@ -1,6 +1,5 @@
 package io.github.hengyunabc.metrics.test;
 
-import io.github.hengyunabc.metrics.DefaultLLDDataGenerator;
 import io.github.hengyunabc.metrics.ZabbixReporter;
 import io.github.hengyunabc.zabbix.sender.ZabbixSender;
 
@@ -59,7 +58,6 @@ public class GetStarted {
 		ZabbixSender zabbixSender = new ZabbixSender("localhost", 49156);
 		ZabbixReporter zabbixReporter = ZabbixReporter.forRegistry(metrics)
 				.hostName(hostName).prefix("metric_")
-				.lldDataGenerator(new DefaultLLDDataGenerator())
 				.build(zabbixSender);
 
 		zabbixReporter.start(1, TimeUnit.SECONDS);
