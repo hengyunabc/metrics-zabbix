@@ -18,9 +18,11 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metered;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 
 public class ZabbixReporter extends ScheduledReporter {
@@ -131,6 +133,35 @@ public class ZabbixReporter extends ScheduledReporter {
 		this.prefix = prefix;
 	}
 
+	private DataObject toDataObject(String key, String suffix, Object value) {
+		return DataObject.builder().host(hostName).key(prefix + key + suffix)
+				.value("" + value).build();
+	}
+
+	private void addSnapshotDataObject(String key,
+			Snapshot snapshot, List<DataObject> dataObjectList) {
+		dataObjectList.add(toDataObject(key, ".min", snapshot.getMin()));
+		dataObjectList.add(toDataObject(key, ".max", snapshot.getMax()));
+		dataObjectList.add(toDataObject(key, ".mean", snapshot.getMean()));
+		dataObjectList.add(toDataObject(key, ".stddev", snapshot.getStdDev()));
+		dataObjectList.add(toDataObject(key, ".median", snapshot.getMedian()));
+		dataObjectList.add(toDataObject(key, ".75%", snapshot.get75thPercentile()));
+		dataObjectList.add(toDataObject(key, ".95%", snapshot.get95thPercentile()));
+		dataObjectList.add(toDataObject(key, ".98%", snapshot.get98thPercentile()));
+		dataObjectList.add(toDataObject(key, ".99%", snapshot.get99thPercentile()));
+		dataObjectList.add(toDataObject(key, ".99.9%", snapshot.get999thPercentile()));
+	}
+	
+	private void addSnapshotDataObject(String key,
+			Metered meter, List<DataObject> dataObjectList) {
+		dataObjectList.add(toDataObject(key, ".count", meter.getCount()));
+		dataObjectList.add(toDataObject(key, ".meanRate", meter.getMeanRate()));
+		dataObjectList.add(toDataObject(key, ".1-minuteRate", meter.getOneMinuteRate()));
+		dataObjectList.add(toDataObject(key, ".5-minuteRate", meter.getFiveMinuteRate()));
+		dataObjectList.add(toDataObject(key, ".15-minuteRate", meter.getFifteenMinuteRate()));
+	}
+	
+
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void report(SortedMap<String, Gauge> gauges,
@@ -153,24 +184,20 @@ public class ZabbixReporter extends ScheduledReporter {
 		}
 
 		for (Map.Entry<String, Histogram> entry : histograms.entrySet()) {
-			DataObject dataObject = DataObject.builder().host(hostName)
-					.key(prefix + entry.getKey())
-					.value("" + entry.getValue().getCount()).build();
-			dataObjectList.add(dataObject);
+			Histogram histogram = entry.getValue();
+			Snapshot snapshot = histogram.getSnapshot();
+			addSnapshotDataObject(entry.getKey(), snapshot, dataObjectList);
 		}
 
 		for (Map.Entry<String, Meter> entry : meters.entrySet()) {
-			DataObject dataObject = DataObject.builder().host(hostName)
-					.key(prefix + entry.getKey())
-					.value("" + entry.getValue().getCount()).build();
-			dataObjectList.add(dataObject);
+			Meter meter = entry.getValue();
+			addSnapshotDataObject(entry.getKey(), meter, dataObjectList);
 		}
 
 		for (Map.Entry<String, Timer> entry : timers.entrySet()) {
-			DataObject dataObject = DataObject.builder().host(hostName)
-					.key(prefix + entry.getKey())
-					.value("" + entry.getValue().getCount()).build();
-			dataObjectList.add(dataObject);
+			Timer timer = entry.getValue();
+			addSnapshotDataObject(entry.getKey(), timer, dataObjectList);
+			addSnapshotDataObject(entry.getKey(), timer.getSnapshot(), dataObjectList);
 		}
 
 		try {
