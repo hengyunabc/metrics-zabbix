@@ -119,6 +119,10 @@ public class ZabbixReporter extends ScheduledReporter {
 		 * @return a {@link ZabbixReporter}
 		 */
 		public ZabbixReporter build(ZabbixSender zabbixSender) {
+			if (hostName == null) {
+				hostName = HostUtil.getHostName();
+				logger.info(name + " detect hostName: " + hostName);
+			}
 			return new ZabbixReporter(registry, name, rateUnit, durationUnit,
 					filter, zabbixSender, hostName, prefix);
 		}
@@ -138,29 +142,36 @@ public class ZabbixReporter extends ScheduledReporter {
 				.value("" + value).build();
 	}
 
-	private void addSnapshotDataObject(String key,
-			Snapshot snapshot, List<DataObject> dataObjectList) {
+	private void addSnapshotDataObject(String key, Snapshot snapshot,
+			List<DataObject> dataObjectList) {
 		dataObjectList.add(toDataObject(key, ".min", snapshot.getMin()));
 		dataObjectList.add(toDataObject(key, ".max", snapshot.getMax()));
 		dataObjectList.add(toDataObject(key, ".mean", snapshot.getMean()));
 		dataObjectList.add(toDataObject(key, ".stddev", snapshot.getStdDev()));
 		dataObjectList.add(toDataObject(key, ".median", snapshot.getMedian()));
-		dataObjectList.add(toDataObject(key, ".75%", snapshot.get75thPercentile()));
-		dataObjectList.add(toDataObject(key, ".95%", snapshot.get95thPercentile()));
-		dataObjectList.add(toDataObject(key, ".98%", snapshot.get98thPercentile()));
-		dataObjectList.add(toDataObject(key, ".99%", snapshot.get99thPercentile()));
-		dataObjectList.add(toDataObject(key, ".99.9%", snapshot.get999thPercentile()));
+		dataObjectList.add(toDataObject(key, ".75%",
+				snapshot.get75thPercentile()));
+		dataObjectList.add(toDataObject(key, ".95%",
+				snapshot.get95thPercentile()));
+		dataObjectList.add(toDataObject(key, ".98%",
+				snapshot.get98thPercentile()));
+		dataObjectList.add(toDataObject(key, ".99%",
+				snapshot.get99thPercentile()));
+		dataObjectList.add(toDataObject(key, ".99.9%",
+				snapshot.get999thPercentile()));
 	}
-	
-	private void addSnapshotDataObject(String key,
-			Metered meter, List<DataObject> dataObjectList) {
+
+	private void addSnapshotDataObject(String key, Metered meter,
+			List<DataObject> dataObjectList) {
 		dataObjectList.add(toDataObject(key, ".count", meter.getCount()));
 		dataObjectList.add(toDataObject(key, ".meanRate", meter.getMeanRate()));
-		dataObjectList.add(toDataObject(key, ".1-minuteRate", meter.getOneMinuteRate()));
-		dataObjectList.add(toDataObject(key, ".5-minuteRate", meter.getFiveMinuteRate()));
-		dataObjectList.add(toDataObject(key, ".15-minuteRate", meter.getFifteenMinuteRate()));
+		dataObjectList.add(toDataObject(key, ".1-minuteRate",
+				meter.getOneMinuteRate()));
+		dataObjectList.add(toDataObject(key, ".5-minuteRate",
+				meter.getFiveMinuteRate()));
+		dataObjectList.add(toDataObject(key, ".15-minuteRate",
+				meter.getFifteenMinuteRate()));
 	}
-	
 
 	@SuppressWarnings("rawtypes")
 	@Override
@@ -197,7 +208,8 @@ public class ZabbixReporter extends ScheduledReporter {
 		for (Map.Entry<String, Timer> entry : timers.entrySet()) {
 			Timer timer = entry.getValue();
 			addSnapshotDataObject(entry.getKey(), timer, dataObjectList);
-			addSnapshotDataObject(entry.getKey(), timer.getSnapshot(), dataObjectList);
+			addSnapshotDataObject(entry.getKey(), timer.getSnapshot(),
+					dataObjectList);
 		}
 
 		try {
