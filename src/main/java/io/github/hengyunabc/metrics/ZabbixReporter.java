@@ -29,6 +29,12 @@ public class ZabbixReporter extends ScheduledReporter {
 	private static final Logger logger = LoggerFactory
 			.getLogger(ZabbixReporter.class);
 
+	/**
+	 * in some system, do not support '%', so will replace '%' to other string.
+	 * default is empty.
+	 */
+	String replacePercentSign = "";
+
 	private ZabbixSender zabbixSender;
 	private String hostName;
 	private String prefix;
@@ -38,6 +44,8 @@ public class ZabbixReporter extends ScheduledReporter {
 	}
 
 	public static class Builder {
+		private String replacePercentSign = "";
+
 		private final MetricRegistry registry;
 		private String name = "zabbix-reporter";
 		private TimeUnit rateUnit;
@@ -113,6 +121,11 @@ public class ZabbixReporter extends ScheduledReporter {
 			return this;
 		}
 
+		public Builder replacePercentSign(String replacePercentSign) {
+			this.replacePercentSign = replacePercentSign;
+			return this;
+		}
+
 		/**
 		 * Builds a {@link ZabbixReporter} with the given properties.
 		 *
@@ -123,15 +136,18 @@ public class ZabbixReporter extends ScheduledReporter {
 				hostName = HostUtil.getHostName();
 				logger.info(name + " detect hostName: " + hostName);
 			}
-			return new ZabbixReporter(registry, name, rateUnit, durationUnit,
-					filter, zabbixSender, hostName, prefix);
+			return new ZabbixReporter(registry, replacePercentSign, name,
+					rateUnit, durationUnit, filter, zabbixSender, hostName,
+					prefix);
 		}
 	}
 
-	private ZabbixReporter(MetricRegistry registry, String name,
-			TimeUnit rateUnit, TimeUnit durationUnit, MetricFilter filter,
-			ZabbixSender zabbixSender, String hostName, String prefix) {
+	private ZabbixReporter(MetricRegistry registry, String replacePercentSign,
+			String name, TimeUnit rateUnit, TimeUnit durationUnit,
+			MetricFilter filter, ZabbixSender zabbixSender, String hostName,
+			String prefix) {
 		super(registry, name, filter, rateUnit, durationUnit);
+		this.replacePercentSign = replacePercentSign;
 		this.zabbixSender = zabbixSender;
 		this.hostName = hostName;
 		this.prefix = prefix;
@@ -142,6 +158,12 @@ public class ZabbixReporter extends ScheduledReporter {
 				.value("" + value).build();
 	}
 
+	/**
+	 * for histograms.
+	 * @param key
+	 * @param snapshot
+	 * @param dataObjectList
+	 */
 	private void addSnapshotDataObject(String key, Snapshot snapshot,
 			List<DataObject> dataObjectList) {
 		dataObjectList.add(toDataObject(key, ".min", snapshot.getMin()));
@@ -161,16 +183,41 @@ public class ZabbixReporter extends ScheduledReporter {
 				snapshot.get999thPercentile()));
 	}
 
-	private void addSnapshotDataObject(String key, Metered meter,
+	/**
+	 * for timer.
+	 * @param key
+	 * @param snapshot
+	 * @param dataObjectList
+	 */
+	private void addSnapshotDataObjectWithConvertDuration(String key, Snapshot snapshot,
+			List<DataObject> dataObjectList) {
+		dataObjectList.add(toDataObject(key, ".min", convertDuration(snapshot.getMin())));
+		dataObjectList.add(toDataObject(key, ".max", convertDuration(snapshot.getMax())));
+		dataObjectList.add(toDataObject(key, ".mean", convertDuration(snapshot.getMean())));
+		dataObjectList.add(toDataObject(key, ".stddev", convertDuration(snapshot.getStdDev())));
+		dataObjectList.add(toDataObject(key, ".median", convertDuration(snapshot.getMedian())));
+		dataObjectList.add(toDataObject(key, ".75%",
+				convertDuration(snapshot.get75thPercentile())));
+		dataObjectList.add(toDataObject(key, ".95%",
+				convertDuration(snapshot.get95thPercentile())));
+		dataObjectList.add(toDataObject(key, ".98%",
+				convertDuration(snapshot.get98thPercentile())));
+		dataObjectList.add(toDataObject(key, ".99%",
+				convertDuration(snapshot.get99thPercentile())));
+		dataObjectList.add(toDataObject(key, ".99.9%",
+				convertDuration(snapshot.get999thPercentile())));
+	}
+	
+	private void addMeterDataObject(String key, Metered meter,
 			List<DataObject> dataObjectList) {
 		dataObjectList.add(toDataObject(key, ".count", meter.getCount()));
-		dataObjectList.add(toDataObject(key, ".meanRate", meter.getMeanRate()));
+		dataObjectList.add(toDataObject(key, ".meanRate", convertRate(meter.getMeanRate())));
 		dataObjectList.add(toDataObject(key, ".1-minuteRate",
-				meter.getOneMinuteRate()));
+				convertRate(meter.getOneMinuteRate())));
 		dataObjectList.add(toDataObject(key, ".5-minuteRate",
-				meter.getFiveMinuteRate()));
+				convertRate(meter.getFiveMinuteRate())));
 		dataObjectList.add(toDataObject(key, ".15-minuteRate",
-				meter.getFifteenMinuteRate()));
+				convertRate(meter.getFifteenMinuteRate())));
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -202,13 +249,13 @@ public class ZabbixReporter extends ScheduledReporter {
 
 		for (Map.Entry<String, Meter> entry : meters.entrySet()) {
 			Meter meter = entry.getValue();
-			addSnapshotDataObject(entry.getKey(), meter, dataObjectList);
+			addMeterDataObject(entry.getKey(), meter, dataObjectList);
 		}
 
 		for (Map.Entry<String, Timer> entry : timers.entrySet()) {
 			Timer timer = entry.getValue();
-			addSnapshotDataObject(entry.getKey(), timer, dataObjectList);
-			addSnapshotDataObject(entry.getKey(), timer.getSnapshot(),
+			addMeterDataObject(entry.getKey(), timer, dataObjectList);
+			addSnapshotDataObjectWithConvertDuration(entry.getKey(), timer.getSnapshot(),
 					dataObjectList);
 		}
 

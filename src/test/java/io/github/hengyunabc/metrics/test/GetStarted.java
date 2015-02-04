@@ -4,69 +4,32 @@ import io.github.hengyunabc.metrics.ZabbixReporter;
 import io.github.hengyunabc.zabbix.sender.ZabbixSender;
 
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.ConsoleReporter;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 
 public class GetStarted {
 	static final MetricRegistry metrics = new MetricRegistry();
-
-	static public Timer timer = new Timer();
-
-	public static void main(String args[]) throws IOException {
-		startReport();
-
-		final Histogram responseSizes = metrics
-				.histogram("response-sizes--TEST");
-
-		timer.schedule(new TimerTask() {
-			int i = 100;
-
-			@Override
-			public void run() {
-				responseSizes.update(i++);
-
-			}
-
-		}, 1000, 1000);
-
-		Meter requests = metrics.meter("requests");
-		requests.mark();
-		wait5Seconds();
-	}
-
-	static void startReport() throws IOException {
+	
+	public static void main(String args[]) throws IOException,
+			InterruptedException {
 		ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
 				.convertRatesTo(TimeUnit.SECONDS)
 				.convertDurationsTo(TimeUnit.MILLISECONDS).build();
 		metrics.register("jvm.mem", new MemoryUsageGaugeSet());
-		// reporter.start(1, TimeUnit.SECONDS);
+		metrics.register("jvm.gc", new GarbageCollectorMetricSet());
+		reporter.start(5, TimeUnit.SECONDS);
 
-		JmxReporter jmxReporter = JmxReporter.forRegistry(metrics).build();
-		jmxReporter.start();
-
-		reporter.start(1, TimeUnit.MINUTES);
-
-		String hostName = "172.17.42.1";
-		ZabbixSender zabbixSender = new ZabbixSender("localhost", 49156);
+		String hostName = "192.168.66.29";
+		ZabbixSender zabbixSender = new ZabbixSender("192.168.90.102", 10051);
 		ZabbixReporter zabbixReporter = ZabbixReporter.forRegistry(metrics)
-				.hostName(hostName).prefix("metric_")
-				.build(zabbixSender);
+				.hostName(hostName).prefix("test.").build(zabbixSender);
 
 		zabbixReporter.start(1, TimeUnit.SECONDS);
-	}
 
-	static void wait5Seconds() {
-		try {
-			Thread.sleep(500 * 1000);
-		} catch (InterruptedException e) {
-		}
+		TimeUnit.SECONDS.sleep(500);
 	}
 }
