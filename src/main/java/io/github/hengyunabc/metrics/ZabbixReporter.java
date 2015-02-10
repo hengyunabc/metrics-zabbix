@@ -171,15 +171,15 @@ public class ZabbixReporter extends ScheduledReporter {
 		dataObjectList.add(toDataObject(key, ".mean", snapshot.getMean()));
 		dataObjectList.add(toDataObject(key, ".stddev", snapshot.getStdDev()));
 		dataObjectList.add(toDataObject(key, ".median", snapshot.getMedian()));
-		dataObjectList.add(toDataObject(key, ".75%",
+		dataObjectList.add(toDataObject(key, ".75th",
 				snapshot.get75thPercentile()));
-		dataObjectList.add(toDataObject(key, ".95%",
+		dataObjectList.add(toDataObject(key, ".95th",
 				snapshot.get95thPercentile()));
-		dataObjectList.add(toDataObject(key, ".98%",
+		dataObjectList.add(toDataObject(key, ".98th",
 				snapshot.get98thPercentile()));
-		dataObjectList.add(toDataObject(key, ".99%",
+		dataObjectList.add(toDataObject(key, ".99th",
 				snapshot.get99thPercentile()));
-		dataObjectList.add(toDataObject(key, ".99.9%",
+		dataObjectList.add(toDataObject(key, ".99.9th",
 				snapshot.get999thPercentile()));
 	}
 
@@ -196,15 +196,15 @@ public class ZabbixReporter extends ScheduledReporter {
 		dataObjectList.add(toDataObject(key, ".mean", convertDuration(snapshot.getMean())));
 		dataObjectList.add(toDataObject(key, ".stddev", convertDuration(snapshot.getStdDev())));
 		dataObjectList.add(toDataObject(key, ".median", convertDuration(snapshot.getMedian())));
-		dataObjectList.add(toDataObject(key, ".75%",
+		dataObjectList.add(toDataObject(key, ".75th",
 				convertDuration(snapshot.get75thPercentile())));
-		dataObjectList.add(toDataObject(key, ".95%",
+		dataObjectList.add(toDataObject(key, ".95th",
 				convertDuration(snapshot.get95thPercentile())));
-		dataObjectList.add(toDataObject(key, ".98%",
+		dataObjectList.add(toDataObject(key, ".98th",
 				convertDuration(snapshot.get98thPercentile())));
-		dataObjectList.add(toDataObject(key, ".99%",
+		dataObjectList.add(toDataObject(key, ".99th",
 				convertDuration(snapshot.get99thPercentile())));
-		dataObjectList.add(toDataObject(key, ".99.9%",
+		dataObjectList.add(toDataObject(key, ".99.9th",
 				convertDuration(snapshot.get999thPercentile())));
 	}
 	

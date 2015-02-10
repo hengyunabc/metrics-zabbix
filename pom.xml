@@ -15,6 +15,8 @@
 		<!-- Logging -->
 		<logback.version>1.0.13</logback.version>
 		<slf4j.version>1.7.5</slf4j.version>
+		
+		<dropwizard.metrics.version>3.1.0</dropwizard.metrics.version>
 
 		<!-- Test -->
 		<junit.version>4.11</junit.version>
@@ -31,13 +33,13 @@
 		<dependency>
 			<groupId>io.dropwizard.metrics</groupId>
 			<artifactId>metrics-core</artifactId>
-			<version>3.1.0</version>
+			<version>${dropwizard.metrics.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>io.dropwizard.metrics</groupId>
 			<artifactId>metrics-jvm</artifactId>
-			<version>3.1.0</version>
+			<version>${dropwizard.metrics.version}</version>
 			<scope>test</scope>
 		</dependency>
 
