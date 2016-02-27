@@ -44,3 +44,6 @@ public class GetStarted {
 }
 ```
 
+##License
+
+Apache License V2
