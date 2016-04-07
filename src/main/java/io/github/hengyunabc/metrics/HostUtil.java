@@ -10,13 +10,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * http://stackoverflow.com/questions/7348711/recommended-way-to-get-hostname-in-java
+ * http://stackoverflow.com/questions/7348711/recommended-way-to-get-hostname-in
+ * -java
+ * 
  * @author hengyunabc
  *
  */
 public class HostUtil {
-	private static final Logger logger = LoggerFactory
-			.getLogger(HostUtil.class);
+	private static final Logger logger = LoggerFactory.getLogger(HostUtil.class);
 
 	public static void main(String[] args) {
 		System.err.println(getHostName());
