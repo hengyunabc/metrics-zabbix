@@ -22,7 +22,7 @@ import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 
 public class GetStarted {
 	static final MetricRegistry metrics = new MetricRegistry();
-	
+
 	public static void main(String args[]) throws IOException,
 			InterruptedException {
 		ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
@@ -43,6 +43,26 @@ public class GetStarted {
 	}
 }
 ```
+
+## Maven dependency
+
+```xml
+<dependency>
+    <groupId>io.github.hengyunabc</groupId>
+    <artifactId>metrics-zabbix</artifactId>
+    <version>0.0.1</version>
+</dependency>
+```
+
+## Others
+
+https://github.com/hengyunabc/zabbix-api
+
+https://github.com/hengyunabc/zabbix-sender
+
+https://github.com/hengyunabc/metrics-kafka
+
+https://github.com/hengyunabc/kafka-zabbix
 
 ##License
 

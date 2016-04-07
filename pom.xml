@@ -1,21 +1,55 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>9</version>
+	</parent>
+
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.hengyunabc</groupId>
 	<artifactId>metrics-zabbix</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
+	<name>metrics-zabbix</name>
+	<description>metrics-zabbix. Report dropwizard/metrics data to zabbix.</description>
+	<url>https://github.com/hengyunabc/metrics-zabbix</url>
+	<inceptionYear>2015</inceptionYear>
+
+	<licenses>
+		<license>
+			<name>Apache 2</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+			<comments>A business-friendly OSS license</comments>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>hengyunabc</id>
+			<name>hengyunabc</name>
+			<email>hengyunabc@gmail.com</email>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git@github.com:hengyunabc/metrics-zabbix.git</connection>
+		<developerConnection>scm:git:git@github.com:hengyunabc/metrics-zabbix.git</developerConnection>
+		<url>https://github.com/hengyunabc/metrics-zabbix</url>
+	</scm>
+
 	<properties>
-		<maven.compiler.target>1.7</maven.compiler.target>
-		<maven.compiler.source>1.7</maven.compiler.source>
-		<java.version>1.7</java.version>
+		<maven.compiler.target>1.6</maven.compiler.target>
+		<maven.compiler.source>1.6</maven.compiler.source>
+		<java.version>1.6</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Logging -->
 		<logback.version>1.0.13</logback.version>
 		<slf4j.version>1.7.5</slf4j.version>
-		
+
 		<dropwizard.metrics.version>3.1.0</dropwizard.metrics.version>
 
 		<!-- Test -->
@@ -27,7 +61,7 @@
 		<dependency>
 			<groupId>io.github.hengyunabc</groupId>
 			<artifactId>zabbix-sender</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.0.1</version>
 		</dependency>
 
 		<dependency>
