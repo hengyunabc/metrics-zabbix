@@ -33,9 +33,10 @@ import com.codahale.metrics.Timer;
 public class ZabbixReporter extends ScheduledReporter {
 	private static final Logger logger = LoggerFactory.getLogger(ZabbixReporter.class);
 
-	private ZabbixSender zabbixSender;
-	private String hostName;
-	private String prefix;
+	private final ZabbixSender zabbixSender;
+	private final String hostName;
+	private final String prefix;
+	private final String suffix;
 
 	public static Builder forRegistry(MetricRegistry registry) {
 		return new Builder(registry);
@@ -51,6 +52,7 @@ public class ZabbixReporter extends ScheduledReporter {
 
 		private String hostName;
 		private String prefix = "";
+		private String suffix = "";
 
 		public Builder(MetricRegistry registry) {
 			this.registry = registry;
@@ -118,6 +120,11 @@ public class ZabbixReporter extends ScheduledReporter {
 			return this;
 		}
 
+		public Builder suffix(String suffix) {
+			this.suffix = suffix;
+			return this;
+		}
+
 		/**
 		 * Builds a {@link ZabbixReporter} with the given properties.
 		 *
@@ -128,20 +135,21 @@ public class ZabbixReporter extends ScheduledReporter {
 				hostName = HostUtil.getHostName();
 				logger.info(name + " detect hostName: " + hostName);
 			}
-			return new ZabbixReporter(registry, name, rateUnit, durationUnit, filter, zabbixSender, hostName, prefix);
+			return new ZabbixReporter(registry, name, rateUnit, durationUnit, filter, zabbixSender, hostName, prefix, suffix);
 		}
 	}
 
 	private ZabbixReporter(MetricRegistry registry, String name, TimeUnit rateUnit, TimeUnit durationUnit,
-			MetricFilter filter, ZabbixSender zabbixSender, String hostName, String prefix) {
+			MetricFilter filter, ZabbixSender zabbixSender, String hostName, String prefix, String suffix) {
 		super(registry, name, filter, rateUnit, durationUnit);
 		this.zabbixSender = zabbixSender;
 		this.hostName = hostName;
 		this.prefix = prefix;
+		this.suffix = suffix;
 	}
 
-	private DataObject toDataObject(String key, String suffix, Object value) {
-		return DataObject.builder().host(hostName).key(prefix + key + suffix).value("" + value).build();
+	private DataObject toDataObject(String key, String keySuffix, Object value) {
+		return DataObject.builder().host(hostName).key(prefix + key + keySuffix + suffix).value("" + value).build();
 	}
 
 	/**
@@ -199,13 +207,13 @@ public class ZabbixReporter extends ScheduledReporter {
 			SortedMap<String, Histogram> histograms, SortedMap<String, Meter> meters, SortedMap<String, Timer> timers) {
 		List<DataObject> dataObjectList = new LinkedList<DataObject>();
 		for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
-			DataObject dataObject = DataObject.builder().host(hostName).key(prefix + entry.getKey())
+			DataObject dataObject = DataObject.builder().host(hostName).key(prefix + entry.getKey() + suffix)
 					.value(entry.getValue().getValue().toString()).build();
 			dataObjectList.add(dataObject);
 		}
 
 		for (Map.Entry<String, Counter> entry : counters.entrySet()) {
-			DataObject dataObject = DataObject.builder().host(hostName).key(prefix + entry.getKey())
+			DataObject dataObject = DataObject.builder().host(hostName).key(prefix + entry.getKey() + suffix)
 					.value("" + entry.getValue().getCount()).build();
 			dataObjectList.add(dataObject);
 		}
