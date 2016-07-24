@@ -1,11 +1,18 @@
 # metrics-zabbix
-Dropwizard Metrics reporter for zabbix.
+Dropwizard Metrics reporter for zabbix. Support zabbix 3.0.
 
 https://github.com/dropwizard/metrics
 
 ## something
-This just use zabbix sender to sender data to zabbix. You have to config item and graph in zabbix server by youself.
+
+* This just use zabbix sender to sender data to zabbix. You have to config item and graph in zabbix server by youself.
 It will not create item auto.
+
+* If you want to create item in zabbix auto, try to use zabbix `Low-level discovery`.
+
+https://www.zabbix.com/documentation/2.0/manual/discovery/low_level_discovery
+
+You can use macro in your metric key, such as `{#FSNAME}`.
 
 ##example
 ```java
@@ -50,7 +57,7 @@ public class GetStarted {
 <dependency>
     <groupId>io.github.hengyunabc</groupId>
     <artifactId>metrics-zabbix</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
 </dependency>
 ```
 
