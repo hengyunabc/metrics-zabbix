@@ -208,7 +208,7 @@ public class ZabbixReporter extends ScheduledReporter {
 		final long clock = System.currentTimeMillis() / 1000;
 		List<DataObject> dataObjectList = new LinkedList<DataObject>();
 		for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
-			DataObject dataObject = toDataObject(entry.getKey(), "", String.valueOf(entry.getValue()), clock);
+			DataObject dataObject = toDataObject(entry.getKey(), "", String.valueOf(entry.getValue().getValue()), clock);
 			dataObjectList.add(dataObject);
 		}
 
