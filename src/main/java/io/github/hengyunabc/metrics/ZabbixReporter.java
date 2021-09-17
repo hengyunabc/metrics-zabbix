@@ -242,7 +242,7 @@ public class ZabbixReporter extends ScheduledReporter {
 				logger.info("report metrics to zabbix success. " + senderResult);
 			}
 		} catch (IOException e) {
-			logger.error("report metris to zabbix error!");
+			logger.error("report metrics to zabbix error!");
 		}
 	}
 
