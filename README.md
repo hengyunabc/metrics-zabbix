@@ -57,7 +57,7 @@ public class GetStarted {
 <dependency>
     <groupId>io.github.hengyunabc</groupId>
     <artifactId>metrics-zabbix</artifactId>
-    <version>0.0.5</version>
+    <version>0.1.1</version>
 </dependency>
 ```
 
