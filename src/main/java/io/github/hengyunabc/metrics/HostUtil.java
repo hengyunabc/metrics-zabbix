@@ -32,17 +32,14 @@ public class HostUtil {
 				return hostName;
 			}
 		} catch (UnknownHostException e) {
-			logger.error("get hostName error!", e);
+			logger.error("get hostName error: {}", e.getMessage(), e);
 		}
 
 		String host = System.getenv("COMPUTERNAME");
 		if (host != null)
 			return host;
 		host = System.getenv("HOSTNAME");
-		if (host != null)
-			return host;
-
-		return null;
+		return host;
 	}
 
 	public static String getNotLoopbackAddress() {
@@ -61,7 +58,7 @@ public class HostUtil {
 				}
 			}
 		} catch (SocketException e) {
-			logger.error("getNotLoopbackAddress error!", e);
+			logger.error("getNotLoopbackAddress error: {}", e.getMessage(), e);
 		}
 		return hostName;
 	}
@@ -70,7 +67,7 @@ public class HostUtil {
 		try {
 			return InetAddress.getLocalHost().getHostAddress();
 		} catch (UnknownHostException e) {
-			logger.error("get hostAddress error!", e);
+			logger.error("get hostAddress error: {}", e.getMessage(), e);
 		}
 
 		return null;
