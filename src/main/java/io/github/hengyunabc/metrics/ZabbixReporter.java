@@ -16,15 +16,118 @@ import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 
  * @author hengyunabc
+ *
  */
 public class ZabbixReporter extends ScheduledReporter {
-    public static final String ZABBIX_SENDER_RESULT = "zabbix.senderResult";
     private static final Logger logger = LoggerFactory.getLogger(ZabbixReporter.class);
+    public static final String ZABBIX_SENDER_RESULT = "zabbix.senderResult";
     private final ZabbixSender zabbixSender;
     private final String hostName;
     private final String prefix;
     private final String suffix;
+
+    public static Builder forRegistry(MetricRegistry registry) {
+        return new Builder(registry);
+    }
+
+    public static class Builder {
+
+        private final MetricRegistry registry;
+        private String name = "zabbix-reporter";
+        private TimeUnit rateUnit;
+        private TimeUnit durationUnit;
+        private MetricFilter filter;
+
+        private String hostName;
+        private String prefix = "";
+        private String suffix = "";
+
+        public Builder(MetricRegistry registry) {
+            this.registry = registry;
+
+            this.rateUnit = TimeUnit.SECONDS;
+            this.durationUnit = TimeUnit.MILLISECONDS;
+            this.filter = MetricFilter.ALL;
+
+        }
+
+        /**
+         * Convert rates to the given time unit.
+         *
+         * @param rateUnit
+         *            a unit of time
+         * @return {@code this}
+         */
+        public Builder convertRatesTo(TimeUnit rateUnit) {
+            this.rateUnit = rateUnit;
+            return this;
+        }
+
+        /**
+         * Convert durations to the given time unit.
+         *
+         * @param durationUnit
+         *            a unit of time
+         * @return {@code this}
+         */
+        public Builder convertDurationsTo(TimeUnit durationUnit) {
+            this.durationUnit = durationUnit;
+            return this;
+        }
+
+        /**
+         * Only report metrics which match the given filter.
+         *
+         * @param filter
+         *            a {@link MetricFilter}
+         * @return {@code this}
+         */
+        public Builder filter(MetricFilter filter) {
+            this.filter = filter;
+            return this;
+        }
+
+        /**
+         * default register name is "zabbix-reporter".
+         *
+         * @param name
+         * @return
+         */
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder hostName(String hostName) {
+            this.hostName = hostName;
+            return this;
+        }
+
+        public Builder prefix(String prefix) {
+            this.prefix = prefix;
+            return this;
+        }
+
+        public Builder suffix(String suffix) {
+            this.suffix = suffix;
+            return this;
+        }
+
+        /**
+         * Builds a {@link ZabbixReporter} with the given properties.
+         *
+         * @return a {@link ZabbixReporter}
+         */
+        public ZabbixReporter build(ZabbixSender zabbixSender) {
+            if (hostName == null) {
+                hostName = HostUtil.getHostName();
+                logger.info(name + " detect hostName: " + hostName);
+            }
+            return new ZabbixReporter(registry, name, rateUnit, durationUnit, filter, zabbixSender, hostName, prefix, suffix);
+        }
+    }
 
     private ZabbixReporter(MetricRegistry registry, String name, TimeUnit rateUnit, TimeUnit durationUnit,
                            MetricFilter filter, ZabbixSender zabbixSender, String hostName, String prefix, String suffix) {
@@ -33,10 +136,6 @@ public class ZabbixReporter extends ScheduledReporter {
         this.hostName = hostName;
         this.prefix = prefix;
         this.suffix = suffix;
-    }
-
-    public static Builder forRegistry(MetricRegistry registry) {
-        return new Builder(registry);
     }
 
     private DataObject toDataObject(String key, String keySuffix, Object value, long clock) {
@@ -96,12 +195,12 @@ public class ZabbixReporter extends ScheduledReporter {
     @Override
     public void report(SortedMap<String, Gauge> gauges, SortedMap<String, Counter> counters,
                        SortedMap<String, Histogram> histograms, SortedMap<String, Meter> meters, SortedMap<String, Timer> timers) {
+        final long clock = System.currentTimeMillis() / 1000;
+        final List<DataObject> dataObjectList = new LinkedList<DataObject>();
         final String meth = "report";
         final long startMs = System.currentTimeMillis();
         try {
             logger.debug("start {}", meth);
-            final long clock = System.currentTimeMillis() / 1000;
-            List<DataObject> dataObjectList = new LinkedList<DataObject>();
             for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
                 DataObject dataObject = toDataObject(entry.getKey(), "", String.valueOf(entry.getValue().getValue()), clock);
                 dataObjectList.add(dataObject);
@@ -128,118 +227,17 @@ public class ZabbixReporter extends ScheduledReporter {
                 addMeterDataObject(entry.getKey(), timer, clock, dataObjectList);
                 addSnapshotDataObjectWithConvertDuration(entry.getKey(), timer.getSnapshot(), clock, dataObjectList);
             }
-
-            try {
-                SenderResult senderResult = zabbixSender.send(dataObjectList, clock);
-                MDC.put(ZABBIX_SENDER_RESULT, senderResult.toString());
-                if (!senderResult.success()) {
-                    logger.warn("Zabbix sender result had errors");
-                } else if (logger.isDebugEnabled()) {
-                    logger.debug("Successfully reported metrics to zabbix");
-                }
-            } catch (IOException e) {
-                logger.error("IOException reporting metrics to zabbix: {}", e.getMessage(), e);
+            SenderResult senderResult = zabbixSender.send(dataObjectList, clock);
+            MDC.put(ZABBIX_SENDER_RESULT, senderResult.toString());
+            if (!senderResult.success()) {
+                logger.warn("Zabbix sender result had errors");
+            } else if (logger.isDebugEnabled()) {
+                logger.debug("Successfully reported metrics to zabbix");
             }
+        } catch (IOException e) {
+            logger.error("IOException reporting metrics to zabbix: {}", e.getMessage(), e);
         } finally {
-            if (logger.isDebugEnabled()) {
-                logger.debug("exit {} after {} ms", meth, System.currentTimeMillis() - startMs);
-            }
-			MDC.remove(ZABBIX_SENDER_RESULT);
+            logger.debug("exit {} after {} ms", meth, System.currentTimeMillis() - startMs);
         }
     }
-
-    public static class Builder {
-
-        private final MetricRegistry registry;
-        private String name = "zabbix-reporter";
-        private TimeUnit rateUnit;
-        private TimeUnit durationUnit;
-        private MetricFilter filter;
-
-        private String hostName;
-        private String prefix = "";
-        private String suffix = "";
-
-        public Builder(MetricRegistry registry) {
-            this.registry = registry;
-
-            this.rateUnit = TimeUnit.SECONDS;
-            this.durationUnit = TimeUnit.MILLISECONDS;
-            this.filter = MetricFilter.ALL;
-
-        }
-
-        /**
-         * Convert rates to the given time unit.
-         *
-         * @param rateUnit a unit of time
-         * @return {@code this}
-         */
-        public Builder convertRatesTo(TimeUnit rateUnit) {
-            this.rateUnit = rateUnit;
-            return this;
-        }
-
-        /**
-         * Convert durations to the given time unit.
-         *
-         * @param durationUnit a unit of time
-         * @return {@code this}
-         */
-        public Builder convertDurationsTo(TimeUnit durationUnit) {
-            this.durationUnit = durationUnit;
-            return this;
-        }
-
-        /**
-         * Only report metrics which match the given filter.
-         *
-         * @param filter a {@link MetricFilter}
-         * @return {@code this}
-         */
-        public Builder filter(MetricFilter filter) {
-            this.filter = filter;
-            return this;
-        }
-
-        /**
-         * default register name is "zabbix-reporter".
-         *
-         * @param name
-         * @return
-         */
-        public Builder name(String name) {
-            this.name = name;
-            return this;
-        }
-
-        public Builder hostName(String hostName) {
-            this.hostName = hostName;
-            return this;
-        }
-
-        public Builder prefix(String prefix) {
-            this.prefix = prefix;
-            return this;
-        }
-
-        public Builder suffix(String suffix) {
-            this.suffix = suffix;
-            return this;
-        }
-
-        /**
-         * Builds a {@link ZabbixReporter} with the given properties.
-         *
-         * @return a {@link ZabbixReporter}
-         */
-        public ZabbixReporter build(ZabbixSender zabbixSender) {
-            if (hostName == null) {
-                hostName = HostUtil.getHostName();
-                logger.info(name + " detect hostName: " + hostName);
-            }
-            return new ZabbixReporter(registry, name, rateUnit, durationUnit, filter, zabbixSender, hostName, prefix, suffix);
-        }
-    }
-
 }
