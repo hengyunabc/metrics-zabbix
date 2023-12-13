@@ -42,14 +42,6 @@
 		<url>https://github.com/hengyunabc/metrics-zabbix</url>
 	</scm>
 
-<!--	<distributionManagement>-->
-<!--		<repository>-->
-<!--			<id>releases</id>-->
-<!--			<name>Our Internal Repo</name>-->
-<!--&lt;!&ndash;			<url>http://nexus.paceap.com:8881/repository/Public</url>&ndash;&gt;-->
-<!--		</repository>-->
-<!--	</distributionManagement>-->
-
 	<properties>
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<maven.compiler.source>1.6</maven.compiler.source>
